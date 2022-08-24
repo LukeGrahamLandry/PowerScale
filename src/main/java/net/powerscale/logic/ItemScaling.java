@@ -17,6 +17,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.powerscale.config.Config;
@@ -38,7 +39,7 @@ public class ItemScaling {
                 @Override
                 public ItemStack apply(ItemStack itemStack, LootContext lootContext) {
                     var lootTableId = id;
-                    var position = lootContext.get(LootContextParameters.ORIGIN);
+                    Vec3d position = lootContext.get(LootContextParameters.ORIGIN);
                     BlockPos blockPosition = null;
                     if (position != null) {
                         blockPosition = new BlockPos(position);
@@ -52,23 +53,23 @@ public class ItemScaling {
     }
 
     public static void scale(ItemStack itemStack, World world, BlockPos position, String lootTableId) {
-        var itemId = Registry.ITEM.getId(itemStack.getItem()).toString();
-        var rarity = itemStack.getRarity().toString();
-        var dimensionId = world.getRegistryKey().getValue().toString(); // Just for logging
+        String itemId = Registry.ITEM.getId(itemStack.getItem()).toString();
+        String rarity = itemStack.getRarity().toString();
+        String dimensionId = world.getRegistryKey().getValue().toString(); // Just for logging
         if (itemStack.getItem() instanceof ToolItem || itemStack.getItem() instanceof RangedWeaponItem) {
-            var locationData = PatternMatching.LocationData.create(world, position);
-            var itemData = new PatternMatching.ItemData(PatternMatching.ItemKind.WEAPONS, lootTableId, itemId, rarity);
+            PatternMatching.LocationData locationData = PatternMatching.LocationData.create(world, position);
+            PatternMatching.ItemData itemData = new PatternMatching.ItemData(PatternMatching.ItemKind.WEAPONS, lootTableId, itemId, rarity);
             // System.out.println("Item scaling start." + " dimension: " + dimensionId + " position: " + position + ", loot table: " + lootTableId + ", item: " + itemId + ", rarity: " + rarity);
-            var modifiers = PatternMatching.getModifiersForItem(locationData, itemData);
+            List<Config.AttributeModifier> modifiers = PatternMatching.getModifiersForItem(locationData, itemData);
             // System.out.println("Pattern matching found " + modifiers.size() + " attribute modifiers");
             applyModifiersForItemStack(new EquipmentSlot[]{ EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND }, itemId, itemStack, modifiers);
         }
         if (itemStack.getItem() instanceof ArmorItem) {
-            var armor = (ArmorItem)itemStack.getItem();
-            var locationData = PatternMatching.LocationData.create(world, position);
-            var itemData = new PatternMatching.ItemData(PatternMatching.ItemKind.ARMOR, lootTableId, itemId, rarity);
+            ArmorItem armor = (ArmorItem)itemStack.getItem();
+            PatternMatching.LocationData locationData = PatternMatching.LocationData.create(world, position);
+            PatternMatching.ItemData itemData = new PatternMatching.ItemData(PatternMatching.ItemKind.ARMOR, lootTableId, itemId, rarity);
             // System.out.println("Item scaling start." + " dimension: " + dimensionId + " position: " + position + ", loot table: " + lootTableId + ", item: " + itemId + ", rarity: " + rarity);
-            var modifiers = PatternMatching.getModifiersForItem(locationData, itemData);
+            List<Config.AttributeModifier> modifiers = PatternMatching.getModifiersForItem(locationData, itemData);
             // System.out.println("Pattern matching found " + modifiers.size() + " attribute modifiers");
             applyModifiersForItemStack(new EquipmentSlot[]{ armor.getSlotType() }, itemId, itemStack, modifiers);
         }
@@ -81,30 +82,30 @@ public class ItemScaling {
                 if (modifier.attribute == null) {
                     continue;
                 }
-                var modifierValue = modifier.randomizedValue();
+                float modifierValue = modifier.randomizedValue();
                 // System.out.println("Applying A " + modifier.attribute + " to " + itemId);
 
                 // The attribute we want to modify
-                var attribute = Registry.ATTRIBUTE.get(new Identifier(modifier.attribute));
+                EntityAttribute attribute = Registry.ATTRIBUTE.get(new Identifier(modifier.attribute));
 
                 Map<EquipmentSlot, Collection<EntityAttributeModifier>> slotSpecificAttributeCollections = new HashMap();
 
-                for(var slot: slots) {
+                for(EquipmentSlot slot: slots) {
                     // The attribute modifiers from this item stack
-                    var attributeModifiers = itemStack.getAttributeModifiers(slot);
+                    Multimap<EntityAttribute, EntityAttributeModifier> attributeModifiers = itemStack.getAttributeModifiers(slot);
 
                     // The modifiers changing the given attribute
-                    var attributeSpecificCollection = attributeModifiers.get(attribute);
+                    Collection<EntityAttributeModifier> attributeSpecificCollection = attributeModifiers.get(attribute);
 
                     slotSpecificAttributeCollections.put(slot, attributeSpecificCollection);
                 }
 
-                for(var entry: slotSpecificAttributeCollections.entrySet()) {
-                    var slot = entry.getKey();
-                    var attributeSpecificCollection = entry.getValue();
-                    var valueSummary = 0;
-                    var mergedModifiers = new ArrayList<EntityAttributeModifier>();
-                    for (var attributeModifier : attributeSpecificCollection) {
+                for(Map.Entry<EquipmentSlot, Collection<EntityAttributeModifier>> entry: slotSpecificAttributeCollections.entrySet()) {
+                    EquipmentSlot slot = entry.getKey();
+                    Collection<EntityAttributeModifier> attributeSpecificCollection = entry.getValue();
+                    int valueSummary = 0;
+                    ArrayList<EntityAttributeModifier> mergedModifiers = new ArrayList<EntityAttributeModifier>();
+                    for (EntityAttributeModifier attributeModifier : attributeSpecificCollection) {
                         if (attributeModifier.getOperation() != EntityAttributeModifier.Operation.ADDITION) {
                             continue;
                         }
@@ -122,7 +123,7 @@ public class ItemScaling {
                         }
                     }
                     if (valueSummary != 0) {
-                        for(var attributeModifier : mergedModifiers) {
+                        for(EntityAttributeModifier attributeModifier : mergedModifiers) {
                             removeAttributesFromItemStack(attributeModifier, itemStack);
                         }
                         itemStack.addAttributeModifier(
@@ -154,13 +155,13 @@ public class ItemScaling {
         if (!itemStack.hasNbt() || !itemStack.getNbt().contains("AttributeModifiers", 9)) {
             // If no metadata yet
             List<SlotSpecificItemAttributes> slotSpecificItemAttributes = new ArrayList<>();
-            for(var slot: EquipmentSlot.values()) {
+            for(EquipmentSlot slot: EquipmentSlot.values()) {
                 slotSpecificItemAttributes.add(new SlotSpecificItemAttributes(slot, itemStack.getAttributeModifiers(slot)));
             }
-            for(var element: slotSpecificItemAttributes) {
-                for(var entry: element.attributes.entries()) {
+            for(SlotSpecificItemAttributes element: slotSpecificItemAttributes) {
+                for(Map.Entry<EntityAttribute, EntityAttributeModifier> entry: element.attributes.entries()) {
                     // System.out.println("copyItemAttributesToNBT slot:" +  element.slot + " - adding: " + entry.getKey() + " - modifier: " + entry.getValue());
-                    var attribute = entry.getKey();
+                    EntityAttribute attribute = entry.getKey();
                     itemStack.addAttributeModifier(
                             attribute,
                             createEntityAttributeModifier(

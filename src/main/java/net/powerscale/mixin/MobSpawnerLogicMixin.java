@@ -1,5 +1,7 @@
 package net.powerscale.mixin;
 
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.mob.Monster;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -43,12 +45,12 @@ public class MobSpawnerLogicMixin {
 
             try {
                 var entityId = this.spawnEntry.getNbt().getString("id");
-                var entityType = Registry.ENTITY_TYPE.get(new Identifier(entityId));
-                var testEntity = entityType.create(world);
-                var isMonster = testEntity instanceof Monster;
-                var entityData = new PatternMatching.EntityData(entityId, isMonster);
-                var locationData = PatternMatching.LocationData.create(world, pos);
-                var modifiers = PatternMatching.getModifiersForSpawner(locationData, entityData);
+                EntityType<?> entityType = Registry.ENTITY_TYPE.get(new Identifier(entityId));
+                Entity testEntity = entityType.create(world);
+                boolean isMonster = testEntity instanceof Monster;
+                PatternMatching.EntityData entityData = new PatternMatching.EntityData(entityId, isMonster);
+                PatternMatching.LocationData locationData = PatternMatching.LocationData.create(world, pos);
+                List<Config.SpawnerModifier> modifiers = PatternMatching.getModifiersForSpawner(locationData, entityData);
 //                if (modifiers.size() > 0) {
 //                    System.out.println("Scaling spawner of: " + entityId + " at: " + pos);
 //                }
@@ -60,7 +62,7 @@ public class MobSpawnerLogicMixin {
     }
 
     private void scaleSpawner(List<Config.SpawnerModifier> modifiers) {
-        for(var modifier: modifiers) {
+        for(Config.SpawnerModifier modifier: modifiers) {
             this.spawnRange = Math.round(spawnRange * modifier.spawn_range_multiplier);
             this.spawnCount = Math.round(spawnCount * modifier.spawn_count_multiplier);
             this.maxNearbyEntities = Math.round(maxNearbyEntities * modifier.max_nearby_entities_multiplier);

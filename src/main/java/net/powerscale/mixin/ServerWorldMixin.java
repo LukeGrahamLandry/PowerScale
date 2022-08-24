@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ServerWorldMixin {
     @Inject(method = "spawnEntity", at = @At("HEAD"))
     private void pre_spawnEntity(Entity entity, CallbackInfoReturnable<Boolean> info) {
-        var world = (ServerWorld) ((Object)this);
+        ServerWorld world = (ServerWorld) ((Object)this);
         EntityScaling.scale(entity, world);
     }
 }

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public class MobEntityMixin {
     @ModifyVariable(method = "getXpToDrop", at = @At(value = "RETURN", ordinal = 0))
     private int modifyDroppedXP(int xp) {
-        var entity = (LivingEntity) (Object) this;
+        LivingEntity entity = (LivingEntity) (Object) this;
         return ExperienceScaling.scale(entity.getWorld(), entity, xp);
     }
 }

@@ -5,10 +5,10 @@ public class Default {
 
     private static Config createDefaultConfig() {
         // Surface
-        var overworld = new Config.Dimension();
+        Config.Dimension overworld = new Config.Dimension();
         overworld.world_matches.dimension_regex = "minecraft:overworld";
 
-        var cold_biomes = new Config.Zone();
+        Config.Zone cold_biomes = new Config.Zone();
         cold_biomes.zone_matches.biome_regex = "frozen|snowy|ice";
         cold_biomes.rewards.weapons = new Config.ItemModifier[] {
                 createItemModifier(
@@ -30,7 +30,7 @@ public class Default {
                         1.5F)
         };
 
-        var desert = new Config.Zone();
+        Config.Zone desert = new Config.Zone();
         desert.zone_matches.biome_regex = "desert";
         desert.rewards.weapons = new Config.ItemModifier[]{
                 createItemModifier(
@@ -62,7 +62,7 @@ public class Default {
         overworld.zones = new Config.Zone[] { cold_biomes, desert };
 
         // Nether
-        var nether = new Config.Dimension();
+        Config.Dimension nether = new Config.Dimension();
         nether.world_matches.dimension_regex = "minecraft:the_nether";
         nether.rewards.weapons = new Config.ItemModifier[]{
                 createItemModifier(new Config.AttributeModifier[]{
@@ -76,7 +76,7 @@ public class Default {
                         createHealthBonus(2)
                 }),
         };
-        var blazeSpawners = new Config.SpawnerModifier();
+        Config.SpawnerModifier blazeSpawners = new Config.SpawnerModifier();
         blazeSpawners = new Config.SpawnerModifier();
         blazeSpawners.min_spawn_delay_multiplier = 0.5F;
         blazeSpawners.max_spawn_delay_multiplier = 0.5F;
@@ -100,7 +100,7 @@ public class Default {
                     1)
         };
 
-        var end = new Config.Dimension();
+        Config.Dimension end = new Config.Dimension();
         end.world_matches.dimension_regex = "minecraft:the_end";
         end.rewards.weapons = new Config.ItemModifier[]{
                 createItemModifier(new Config.AttributeModifier[]{
@@ -132,15 +132,15 @@ public class Default {
                         2F)
         };
 
-        var anyDimension = new Config.Dimension();
-        var epics = createItemModifier(
+        Config.Dimension anyDimension = new Config.Dimension();
+        Config.ItemModifier epics = createItemModifier(
                 new Config.AttributeModifier[]{
                         createDamageMultiplier(1.2F,0),
                         createProjectileMultiplier(1.2F, 0)
                 }
         );
         epics.item_matches.rarity_regex = "epic";
-        var rares = createItemModifier(
+        Config.ItemModifier rares = createItemModifier(
                 new Config.AttributeModifier[]{
                         createDamageMultiplier(1.1F,0),
                         createProjectileMultiplier(1.1F, 0)
@@ -149,7 +149,7 @@ public class Default {
         rares.item_matches.rarity_regex = "rare";
         anyDimension.rewards.weapons = new Config.ItemModifier[] { rares, epics };
 
-        var config = new Config();
+        Config config = new Config();
         config.dimensions = new Config.Dimension[] { overworld, nether, end, anyDimension };
         return config;
     }
@@ -159,7 +159,7 @@ public class Default {
     }
 
     private static Config.ItemModifier createItemModifier(String itemIdRegex, String lootTableRegex, Config.AttributeModifier[] attributeModifiers) {
-        var itemModifier = new Config.ItemModifier();
+        Config.ItemModifier itemModifier = new Config.ItemModifier();
         itemModifier.item_matches = new Config.ItemModifier.Filters();
         if (itemIdRegex != null) {
             itemModifier.item_matches.item_id_regex = itemIdRegex;
@@ -172,13 +172,13 @@ public class Default {
     }
 
     private static Config.AttributeModifier createDamageMultiplier(float value, float randomness) {
-        var modifier = new Config.AttributeModifier("generic.attack_damage", value);
+        Config.AttributeModifier modifier = new Config.AttributeModifier("generic.attack_damage", value);
         modifier.randomness = randomness;
         return modifier;
     }
 
     private static Config.AttributeModifier createProjectileMultiplier(float value, float randomness) {
-        var modifier = new Config.AttributeModifier("generic.projectile_damage", value);
+        Config.AttributeModifier modifier = new Config.AttributeModifier("generic.projectile_damage", value);
         modifier.randomness = randomness;
         return modifier;
     }
@@ -188,25 +188,25 @@ public class Default {
     }
 
     private static Config.AttributeModifier createArmorBonus(float value) {
-        var modifier = new Config.AttributeModifier("generic.armor", value);
+        Config.AttributeModifier modifier = new Config.AttributeModifier("generic.armor", value);
         modifier.operation = Config.Operation.ADD;
         return modifier;
     }
 
     private static Config.AttributeModifier createHealthMultiplier(float value, float randomness) {
-        var modifier = new Config.AttributeModifier("generic.max_health", value);
+        Config.AttributeModifier modifier = new Config.AttributeModifier("generic.max_health", value);
         modifier.randomness = randomness;
         return modifier;
     }
 
     private static Config.AttributeModifier createHealthBonus(float value) {
-        var modifier = new Config.AttributeModifier("generic.max_health", value);
+        Config.AttributeModifier modifier = new Config.AttributeModifier("generic.max_health", value);
         modifier.operation = Config.Operation.ADD;
         return modifier;
     }
 
     private static Config.EntityModifier createEntityModifier(String idRegex, Config.AttributeModifier[] attributeModifiers, Config.SpawnerModifier spawnerModifier, float xpMultiplier) {
-        var entityModifier = new Config.EntityModifier();
+        Config.EntityModifier entityModifier = new Config.EntityModifier();
         entityModifier.entity_matches = new Config.EntityModifier.Filters();
         entityModifier.entity_matches.entity_id_regex = idRegex;
         entityModifier.attributes = attributeModifiers;

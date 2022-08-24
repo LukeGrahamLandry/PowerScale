@@ -20,7 +20,7 @@ public class PatternMatching {
 
     public record LocationData(String dimensionId, @Nullable BlockPos position, @Nullable String biome) {
         public static LocationData create(World world, BlockPos position) {
-            var dimensionId = world.getRegistryKey().getValue().toString();
+            String dimensionId = world.getRegistryKey().getValue().toString();
             String biome = null;
             if (position != null) {
                 biome = world.getBiome(position).getKey().orElse(BiomeKeys.PLAINS).getValue().toString();
@@ -31,7 +31,7 @@ public class PatternMatching {
             if (filters == null) {
                 return true;
             }
-            var result = PatternMatching.matches(dimensionId, filters.dimension_regex);
+            boolean result = PatternMatching.matches(dimensionId, filters.dimension_regex);
             // System.out.println("PatternMatching - dimension:" + dimensionId + " matches: " + filters.dimension_regex + " - " + result);
             return result;
         }
@@ -40,7 +40,7 @@ public class PatternMatching {
             if (filters == null) {
                 return true;
             }
-            var result = PatternMatching.matches(biome, filters.biome_regex);
+            boolean result = PatternMatching.matches(biome, filters.biome_regex);
             // System.out.println("PatternMatching - biome:" + biome + " matches: " + filters.biome_regex + " - " + result);
             return result;
         }
@@ -56,7 +56,7 @@ public class PatternMatching {
             if (filters == null) {
                 return true;
             }
-            var result = PatternMatching.matches(itemId, filters.item_id_regex)
+            boolean result = PatternMatching.matches(itemId, filters.item_id_regex)
                     && PatternMatching.matches(lootTableId, filters.loot_table_regex)
                     && PatternMatching.matches(rarity, filters.rarity_regex);
             // System.out.println("PatternMatching - item:" + itemId + " matches all" + " - " + result);
@@ -69,9 +69,9 @@ public class PatternMatching {
     }
 
     public static List<Config.AttributeModifier> getModifiersForItem(LocationData locationData, ItemData itemData) {
-        var attributeModifiers = new ArrayList<Config.AttributeModifier>();
-        var locations = getLocationsMatching(locationData);
-        for (var location: locations) {
+        ArrayList<Config.AttributeModifier> attributeModifiers = new ArrayList<Config.AttributeModifier>();
+        List<Location> locations = getLocationsMatching(locationData);
+        for (Location location: locations) {
             if (location.rewards != null) {
                 Config.ItemModifier[] itemModifiers = null;
                 switch (itemData.kind) {
@@ -85,7 +85,7 @@ public class PatternMatching {
                 if (itemModifiers == null) {
                     continue;
                 }
-                for(var entry: itemModifiers) {
+                for(Config.ItemModifier entry: itemModifiers) {
                     if (itemData.matches(entry.item_matches)) {
                         attributeModifiers.addAll(Arrays.asList(entry.attributes));
                     }
@@ -98,15 +98,15 @@ public class PatternMatching {
 
     public record EntityData(String entityId, boolean isHostile) {
         public static EntityData create(LivingEntity entity) {
-            var entityId = Registry.ENTITY_TYPE.getId(entity.getType()).toString();
-            var isHostile = entity instanceof Monster;
+            String entityId = Registry.ENTITY_TYPE.getId(entity.getType()).toString();
+            boolean isHostile = entity instanceof Monster;
             return new EntityData(entityId, isHostile);
         }
         public boolean matches(Config.EntityModifier.Filters filters) {
             if (filters == null) {
                 return true;
             }
-            var matchesAttitude = true;
+            boolean matchesAttitude = true;
             if (filters.attitude != null) {
                 switch (filters.attitude) {
                     case FRIENDLY -> {
@@ -120,7 +120,7 @@ public class PatternMatching {
                     }
                 }
             }
-            var result = matchesAttitude && PatternMatching.matches(entityId, filters.entity_id_regex);
+            boolean result = matchesAttitude && PatternMatching.matches(entityId, filters.entity_id_regex);
 
             // System.out.println("PatternMatching - dimension:" + entityId + " matches: " + filters.entity_id_regex + " - " + result);
             return result;
@@ -128,16 +128,16 @@ public class PatternMatching {
     }
 
     public static List<Config.AttributeModifier> getAttributeModifiersForEntity(LocationData locationData, EntityData entityData) {
-        var attributeModifiers = new ArrayList<Config.AttributeModifier>();
-        for (var modifier: getModifiersForEntity(locationData, entityData)) {
+        ArrayList<Config.AttributeModifier> attributeModifiers = new ArrayList<Config.AttributeModifier>();
+        for (Config.EntityModifier modifier: getModifiersForEntity(locationData, entityData)) {
             attributeModifiers.addAll(Arrays.asList(modifier.attributes));
         }
         return attributeModifiers;
     }
 
     public static List<Config.SpawnerModifier> getModifiersForSpawner(LocationData locationData, EntityData entityData) {
-        var spawnerModifiers = new ArrayList<Config.SpawnerModifier>();
-        for (var modifier: getModifiersForEntity(locationData, entityData)) {
+        ArrayList<Config.SpawnerModifier> spawnerModifiers = new ArrayList<Config.SpawnerModifier>();
+        for (Config.EntityModifier modifier: getModifiersForEntity(locationData, entityData)) {
             if(modifier.spawners != null) {
                 spawnerModifiers.add(modifier.spawners);
             }
@@ -146,10 +146,10 @@ public class PatternMatching {
     }
 
     public static List<Config.EntityModifier> getModifiersForEntity(LocationData locationData, EntityData entityData) {
-        var entityModifiers = new ArrayList<Config.EntityModifier>();
-        var locations = getLocationsMatching(locationData);
-        for (var location : locations) {
-            for(var entityModifier: location.entities) {
+        ArrayList<Config.EntityModifier> entityModifiers = new ArrayList<Config.EntityModifier>();
+        List<Location> locations = getLocationsMatching(locationData);
+        for (Location location : locations) {
+            for(Config.EntityModifier entityModifier: location.entities) {
                 if (entityData.matches(entityModifier.entity_matches)) {
                     entityModifiers.add(entityModifier);
                 }
@@ -162,12 +162,12 @@ public class PatternMatching {
                            Config.Rewards rewards) { }
 
     public static List<Location> getLocationsMatching(LocationData locationData) {
-        var locations = new ArrayList<Location>();
-        for (var entry : ConfigManager.currentConfig.dimensions) {
+        ArrayList<Location> locations = new ArrayList<Location>();
+        for (Config.Dimension entry : ConfigManager.currentConfig.dimensions) {
             if (locationData.matches(entry.world_matches)) {
                 locations.add(new Location(entry.entities, entry.rewards));
                 if (entry.zones != null) {
-                    for(var zone: entry.zones) {
+                    for(Config.Zone zone: entry.zones) {
                         if(locationData.matches(zone.zone_matches)) {
                             locations.add(new Location(zone.entities, zone.rewards));
                         }
