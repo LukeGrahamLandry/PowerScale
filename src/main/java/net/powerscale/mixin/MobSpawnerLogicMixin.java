@@ -9,6 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.MobSpawnerEntry;
 import net.minecraft.world.MobSpawnerLogic;
+import net.minecraft.world.World;
 import net.powerscale.PowerScale;
 import net.powerscale.config.Config;
 import net.powerscale.logic.PatternMatching;
@@ -21,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 
 @Mixin(MobSpawnerLogic.class)
-public class MobSpawnerLogicMixin {
+public abstract class MobSpawnerLogicMixin {
     @Shadow private int spawnRange;
     @Shadow private int spawnCount;
     @Shadow private int maxNearbyEntities;
@@ -30,26 +31,31 @@ public class MobSpawnerLogicMixin {
     @Shadow private int requiredPlayerRange;
 
     @Shadow private MobSpawnerEntry spawnEntry;
+
+    @Shadow public abstract World getWorld();
+
+    @Shadow public abstract BlockPos getPos();
+
     private boolean initialized = false;
 
     private static String modifiedKey = "modified_by_" + PowerScale.MODID;
 
-    @Inject(method = "serverTick", at = @At("HEAD"))
-    private void pre_serverTick(ServerWorld world, BlockPos pos, CallbackInfo ci) {
+    @Inject(method = "update", at = @At("HEAD"))
+    private void pre_serverTick(CallbackInfo ci) {
         if(!initialized) {
             initialized = true;
 
-            if(this.spawnEntry.getNbt().contains(modifiedKey)) {
+            if(this.spawnEntry.getEntityNbt().contains(modifiedKey)) {
                 return;
             }
 
             try {
-                var entityId = this.spawnEntry.getNbt().getString("id");
+                String entityId = this.spawnEntry.getEntityNbt().getString("id");
                 EntityType<?> entityType = Registry.ENTITY_TYPE.get(new Identifier(entityId));
-                Entity testEntity = entityType.create(world);
+                Entity testEntity = entityType.create(getWorld());
                 boolean isMonster = testEntity instanceof Monster;
                 PatternMatching.EntityData entityData = new PatternMatching.EntityData(entityId, isMonster);
-                PatternMatching.LocationData locationData = PatternMatching.LocationData.create(world, pos);
+                PatternMatching.LocationData locationData = PatternMatching.LocationData.create(getWorld(), getPos());
                 List<Config.SpawnerModifier> modifiers = PatternMatching.getModifiersForSpawner(locationData, entityData);
 //                if (modifiers.size() > 0) {
 //                    System.out.println("Scaling spawner of: " + entityId + " at: " + pos);
@@ -71,7 +77,7 @@ public class MobSpawnerLogicMixin {
             this.requiredPlayerRange = Math.round(requiredPlayerRange * modifier.required_player_range_multiplier);
         }
         if (modifiers.size() > 0) {
-            this.spawnEntry.getNbt().putBoolean(modifiedKey, true);
+            this.spawnEntry.getEntityNbt().putBoolean(modifiedKey, true);
 //            System.out.println("Spawner scaled");
 //            System.out.println(" spawnRange:" + spawnRange
 //                    + " spawnCount:" + spawnCount

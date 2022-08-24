@@ -18,12 +18,24 @@ import java.util.regex.Pattern;
 
 public class PatternMatching {
 
-    public record LocationData(String dimensionId, @Nullable BlockPos position, @Nullable String biome) {
+    public static class LocationData {
+        private final String dimensionId;
+        @Nullable
+        private final BlockPos position;
+        @Nullable
+        private final String biome;
+
+        public LocationData(String dimensionId, @Nullable BlockPos position, @Nullable String biome){
+            this.dimensionId = dimensionId;
+            this.position = position;
+            this.biome = biome;
+        }
+
         public static LocationData create(World world, BlockPos position) {
             String dimensionId = world.getRegistryKey().getValue().toString();
             String biome = null;
             if (position != null) {
-                biome = world.getBiome(position).getKey().orElse(BiomeKeys.PLAINS).getValue().toString();
+                biome = world.getRegistryManager().get(Registry.BIOME_KEY).getKey(world.getBiome(position)).orElse(BiomeKeys.PLAINS).getValue().toString();
             }
             return new LocationData(dimensionId, position, biome);
         }
@@ -46,11 +58,18 @@ public class PatternMatching {
         }
     }
 
-    public record ItemData(
-            ItemKind kind,
-            String lootTableId,
-            String itemId,
-            String rarity) {
+    public static class ItemData {
+        private final ItemKind kind;
+        private final String lootTableId;
+        private final String itemId;
+        private final String rarity;
+
+        public ItemData (ItemKind kind, String lootTableId, String itemId, String rarity){
+            this.kind = kind;
+            this.lootTableId = lootTableId;
+            this.itemId = itemId;
+            this.rarity = rarity;
+        }
 
         public boolean matches(Config.ItemModifier.Filters filters) {
             if (filters == null) {
@@ -74,13 +93,10 @@ public class PatternMatching {
         for (Location location: locations) {
             if (location.rewards != null) {
                 Config.ItemModifier[] itemModifiers = null;
-                switch (itemData.kind) {
-                    case ARMOR -> {
-                        itemModifiers = location.rewards.armor;
-                    }
-                    case WEAPONS -> {
-                        itemModifiers = location.rewards.weapons;
-                    }
+                if (itemData.kind == ItemKind.ARMOR){
+                    itemModifiers = location.rewards.armor;
+                } else if (itemData.kind == ItemKind.WEAPONS){
+                    itemModifiers = location.rewards.weapons;
                 }
                 if (itemModifiers == null) {
                     continue;
@@ -96,7 +112,15 @@ public class PatternMatching {
         return attributeModifiers;
     }
 
-    public record EntityData(String entityId, boolean isHostile) {
+    public static class EntityData {
+        private final String entityId;
+        private final boolean isHostile;
+
+        public EntityData(String entityId, boolean isHostile){
+            this.entityId = entityId;
+            this.isHostile = isHostile;
+        }
+
         public static EntityData create(LivingEntity entity) {
             String entityId = Registry.ENTITY_TYPE.getId(entity.getType()).toString();
             boolean isHostile = entity instanceof Monster;
@@ -108,16 +132,12 @@ public class PatternMatching {
             }
             boolean matchesAttitude = true;
             if (filters.attitude != null) {
-                switch (filters.attitude) {
-                    case FRIENDLY -> {
-                        matchesAttitude = !isHostile;
-                    }
-                    case HOSTILE -> {
-                        matchesAttitude = isHostile;
-                    }
-                    case ANY -> {
-                        matchesAttitude = true;
-                    }
+                if (filters.attitude == Config.EntityModifier.Filters.Attitude.FRIENDLY){
+                    matchesAttitude = !isHostile;
+                } else if (filters.attitude == Config.EntityModifier.Filters.Attitude.HOSTILE){
+                    matchesAttitude = isHostile;
+                } else {
+                    matchesAttitude = true;
                 }
             }
             boolean result = matchesAttitude && PatternMatching.matches(entityId, filters.entity_id_regex);
@@ -158,8 +178,15 @@ public class PatternMatching {
         return entityModifiers;
     }
 
-    public record Location(Config.EntityModifier[] entities,
-                           Config.Rewards rewards) { }
+    public static class Location {
+        public final Config.EntityModifier[] entities;
+        public final Config.Rewards rewards;
+
+        public Location(Config.EntityModifier[] entities, Config.Rewards rewards){
+            this.entities = entities;
+            this.rewards = rewards;
+        }
+    }
 
     public static List<Location> getLocationsMatching(LocationData locationData) {
         ArrayList<Location> locations = new ArrayList<Location>();

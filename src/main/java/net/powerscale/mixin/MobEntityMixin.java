@@ -12,6 +12,6 @@ public class MobEntityMixin {
     @ModifyVariable(method = "getXpToDrop", at = @At(value = "RETURN", ordinal = 0))
     private int modifyDroppedXP(int xp) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        return ExperienceScaling.scale(entity.getWorld(), entity, xp);
+        return ExperienceScaling.scale(entity.world, entity, xp);
     }
 }

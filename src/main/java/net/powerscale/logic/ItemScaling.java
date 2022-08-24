@@ -21,12 +21,14 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.powerscale.config.Config;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.slf4j.Logger;
 
 import java.util.*;
 
 public class ItemScaling {
-    static final Logger LOGGER = LogUtils.getLogger();
+    static final Logger LOGGER = LogManager.getLogger();
 
     public static void initialize() {
         LootTableEvents.MODIFY.register((resourceManager, lootManager, id, tableBuilder, source) -> {
@@ -38,7 +40,7 @@ public class ItemScaling {
 
                 @Override
                 public ItemStack apply(ItemStack itemStack, LootContext lootContext) {
-                    var lootTableId = id;
+                    Identifier lootTableId = id;
                     Vec3d position = lootContext.get(LootContextParameters.ORIGIN);
                     BlockPos blockPosition = null;
                     if (position != null) {
@@ -114,14 +116,12 @@ public class ItemScaling {
                         mergedModifiers.add(attributeModifier);
                         // System.out.println("Found attribute value: " + attributeModifier.getValue() + " sum: " + currentValue);
                     }
-                    switch (modifier.operation) {
-                        case ADD -> {
-                            valueSummary += modifierValue;
-                        }
-                        case MULTIPLY -> {
-                            valueSummary *= modifierValue;
-                        }
+                    if (modifier.operation == Config.Operation.ADD){
+                        valueSummary += modifierValue;
+                    } else if (modifier.operation == Config.Operation.MULTIPLY){
+                        valueSummary *= modifierValue;
                     }
+
                     if (valueSummary != 0) {
                         for(EntityAttributeModifier attributeModifier : mergedModifiers) {
                             removeAttributesFromItemStack(attributeModifier, itemStack);
@@ -147,12 +147,18 @@ public class ItemScaling {
         }
     }
 
-    public record SlotSpecificItemAttributes(
-            EquipmentSlot slot,
-            Multimap<EntityAttribute, EntityAttributeModifier> attributes) { }
+    public static class SlotSpecificItemAttributes {
+        private final EquipmentSlot slot;
+        private final Multimap<EntityAttribute, EntityAttributeModifier> attributes;
+
+        public SlotSpecificItemAttributes(EquipmentSlot slot, Multimap<EntityAttribute, EntityAttributeModifier> attributes){
+            this.slot = slot;
+            this.attributes = attributes;
+        }
+    }
 
     private static void copyItemAttributesToNBT(ItemStack itemStack) {
-        if (!itemStack.hasNbt() || !itemStack.getNbt().contains("AttributeModifiers", 9)) {
+        if (!itemStack.hasTag() || !itemStack.getTag().contains("AttributeModifiers", 9)) {
             // If no metadata yet
             List<SlotSpecificItemAttributes> slotSpecificItemAttributes = new ArrayList<>();
             for(EquipmentSlot slot: EquipmentSlot.values()) {
@@ -191,10 +197,10 @@ public class ItemScaling {
     }
 
     private static void removeAttributesFromItemStack(EntityAttributeModifier attributeModifier, ItemStack itemStack) {
-        NbtList nbtList = itemStack.getNbt().getList("AttributeModifiers", 10);
+        NbtList nbtList = itemStack.getTag().getList("AttributeModifiers", 10);
         nbtList.removeIf(element -> {
-            if (element instanceof NbtCompound compound) {
-                return compound.getUuid("UUID").equals(attributeModifier.getId());
+            if (element instanceof NbtCompound) {
+                return ((NbtCompound) element).getUuid("UUID").equals(attributeModifier.getId());
             }
             return false;
         });
