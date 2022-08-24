@@ -80,9 +80,12 @@ public class Config {
         }
 
         private static Random rng = new Random();
+        private static float rand(float min, float max){
+            return min + rng.nextFloat() * (max - min);
+        }
         public float randomizedValue() {
             return (randomness > 0)
-                    ?  rng.nextFloat(value - randomness, value + randomness)
+                    ?  rand(value - randomness, value + randomness)
                     : value;
         }
     }
