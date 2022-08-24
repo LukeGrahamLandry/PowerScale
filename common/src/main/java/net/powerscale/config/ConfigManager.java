@@ -2,7 +2,7 @@ package net.powerscale.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import net.fabricmc.loader.api.FabricLoader;
+import net.powerscale.Platform;
 import net.powerscale.PowerScale;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +25,7 @@ public class ConfigManager {
         String configFileName = PowerScale.MODID + ".json";
         boolean sanitizeConfig = false;
         boolean overrideWithDefault = false;
-        Path configDir = FabricLoader.getInstance().getConfigDir();
+        Path configDir = Platform.getConfigDir();
 
         try {
             Gson gson = new Gson();

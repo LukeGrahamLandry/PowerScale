@@ -7,7 +7,7 @@ import net.powerscale.logic.ItemScaling;
 import net.fabricmc.api.ModInitializer;
 
 public class PowerScale implements ModInitializer {
-    public static String MODID = "powerscale";
+    public static final String MODID = "powerscale";
 
     @Override
     public void onInitialize() {

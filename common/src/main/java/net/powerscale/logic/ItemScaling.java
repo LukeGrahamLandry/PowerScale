@@ -1,8 +1,6 @@
 package net.powerscale.logic;
 
 import com.google.common.collect.Multimap;
-import com.mojang.logging.LogUtils;
-import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -20,10 +18,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
+import net.powerscale.Platform;
 import net.powerscale.config.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -31,8 +29,8 @@ public class ItemScaling {
     static final Logger LOGGER = LogManager.getLogger();
 
     public static void initialize() {
-        LootTableEvents.MODIFY.register((resourceManager, lootManager, id, tableBuilder, source) -> {
-            LootFunction function = new LootFunction() {
+        Platform.registerLoottableModifier((id, tableBuilder) -> {
+            LootFunction.Builder function = () -> new LootFunction() {
                 @Override
                 public LootFunctionType getType() {
                     return LootFunctionTypes.SET_ATTRIBUTES;

@@ -23,7 +23,7 @@ public class EntityScaling {
             EntityScaling.apply(attributeModifiers, livingEntity);
 
             for (ItemStack itemStack: livingEntity.getItemsEquipped()) {
-                ItemScaling.scale(itemStack, world, livingEntity.getBlockPos(), entityData.entityId());
+                ItemScaling.scale(itemStack, world, livingEntity.getBlockPos(), entityData.entityId);
             }
         }
     }
@@ -41,18 +41,15 @@ public class EntityScaling {
 
             float modifierValue = modifier.randomizedValue();
 
-            switch (modifier.operation) {
-                case ADD -> {
-                    EntityAttributeInstance entityAttribute = entity.getAttributeInstance(attribute);
-                    if (entityAttribute != null) {
-                        entityAttribute.setBaseValue(entityAttribute.getBaseValue() + modifierValue);
-                    }
+            if (modifier.operation == Config.Operation.ADD){
+                EntityAttributeInstance entityAttribute = entity.getAttributeInstance(attribute);
+                if (entityAttribute != null) {
+                    entityAttribute.setBaseValue(entityAttribute.getBaseValue() + modifierValue);
                 }
-                case MULTIPLY -> {
-                    double defaultValue = entity.getAttributeValue(attribute);
-                    if (defaultValue > 0) {
-                        entity.getAttributeInstance(attribute).setBaseValue(defaultValue * modifierValue);
-                    }
+            } else if (modifier.operation == Config.Operation.MULTIPLY){
+                double defaultValue = entity.getAttributeValue(attribute);
+                if (defaultValue > 0) {
+                    entity.getAttributeInstance(attribute).setBaseValue(defaultValue * modifierValue);
                 }
             }
         }

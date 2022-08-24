@@ -1,0 +1,16 @@
+repositories {
+    maven { url 'https://maven.kosmx.dev/' }
+    maven { url 'https://maven.shedaniel.me/' }
+    maven { url 'https://maven.fabricmc.net/' }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://maven.terraformersmc.com/' }
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_version}"
+}
+
+architectury {
+    common(rootProject.platforms.split(","))
+}

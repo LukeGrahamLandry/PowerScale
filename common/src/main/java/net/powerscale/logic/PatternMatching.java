@@ -113,7 +113,7 @@ public class PatternMatching {
     }
 
     public static class EntityData {
-        private final String entityId;
+        public final String entityId;
         private final boolean isHostile;
 
         public EntityData(String entityId, boolean isHostile){
