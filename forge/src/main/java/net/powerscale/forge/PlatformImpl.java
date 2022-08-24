@@ -18,7 +18,6 @@ public class PlatformImpl {
     }
 
     public static void registerLoottableModifier(BiConsumer<Identifier, LootTable.Builder> event) {
-        System.out.println("registerLoottableModifier not implimented");
         LootTableEvents.MODIFY.register((resourceManager, lootManager, id, tableBuilder, source) -> {
             event.accept(id, tableBuilder);
         });

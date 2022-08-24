@@ -14,7 +14,7 @@ public class Platform {
     }
 
     @ExpectPlatform
-    public static boolean registerLoottableModifier(BiConsumer<Identifier, LootTable.Builder> event) {
+    public static void registerLoottableModifier(BiConsumer<Identifier, LootTable.Builder> event) {
         throw new AssertionError();
     }
 
